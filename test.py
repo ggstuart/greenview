@@ -1,16 +1,17 @@
 import greenview
 
 ws = greenview.WebService()
-m = ws.gGetBuildingMeters()
+#r = ws.GraemeLatestReading(213)
+#d = ws.GraemeLatestReadingDate(213)
+w = ws.GraemeLatestWeek(213)
+
+#print r.to_json(indent=4)
+#print d.to_json(indent=4)
 
 #compact json
-print m.to_json(separators=(',', ':'))
+print w.to_json(separators=(',', ':'))
 
 #pretty json
-with open('output.json', 'w') as outfile:
-    outfile.write(m.to_json(indent=4))
-
-#xml
-with open('output.xml', 'w') as outfile:
-    outfile.write(m.to_xml())
+with open('output/output.json', 'w') as outfile:
+    outfile.write(w.to_json(indent=4))
 

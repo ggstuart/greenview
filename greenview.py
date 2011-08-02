@@ -1,6 +1,11 @@
 from urllib2 import urlopen, HTTPError
 from xml.dom.minidom import parse
-import datetime
+import datetime, time, math
+import numpy as np
+
+
+def timestamp(dt):
+    return np.array([time.mktime(d.timetuple()) for d in dt])
 
 class WebService(object):
     
@@ -26,6 +31,96 @@ class WebService(object):
         """Specific to getting meters data, passes file to specific object for data extraction"""
         dom = self.getDocument('gGetBuildingMeters', force)
         return gGetBuildingMeters(dom)
+
+    def GraemeLatestReading(self, meter_id, force=False):
+        cmd = 'GraemeLatestReading?meter_id=%s' % meter_id
+        dom = self.getDocument(cmd, force)
+        return GraemeLatestReading(dom)
+
+    def GraemeLatestReadingDate(self, meter_id, force=False):
+        cmd = 'GraemeLatestReadingDate?meter_id=%s' % meter_id
+        dom = self.getDocument(cmd, force)
+        return GraemeLatestReadingDate(dom)
+
+
+    def GraemeLatestWeek(self, meter_id, inclusive=True, force=False):
+        cmd = 'GraemeLatestWeek?meter_id=%s&inclusive=%s' % (meter_id, inclusive)
+        dom = self.getDocument(cmd, force)
+        return GraemeLatestWeek(dom)
+
+
+class GraemeLatestWeek(object):
+    def __init__(self, dom):
+        self.datetime = []
+        self.value = []
+        for reading in dom.getElementsByTagName('reading'):
+            self.datetime.append(datetime.datetime.strptime(reading.getElementsByTagName("datetime")[0].childNodes[0].data, "%d/%m/%Y %H:%M:%S"))
+            self.value.append(reading.getElementsByTagName("value")[0].childNodes[0].data)
+
+    def data(self, interpolated=True, consumption=True):
+        data = {'datetime': self.datetime, 'value': self.value}
+        if interpolated:
+            resolution = 30*60  #half hourly
+            dt = data['datetime']
+            readings = data['value']
+            ts = timestamp(dt)
+            first = math.ceil(min(ts)/resolution)*resolution
+            last = math.floor(max(ts)/resolution)*resolution
+            new_ts = np.arange(first, last, resolution, dtype=float)
+            new_dt = [datetime.datetime.fromtimestamp(s) for s in new_ts]
+            new_readings = np.interp(new_ts, ts, readings)
+            data = {'datetime': new_dt, 'value': new_readings}
+        if consumption:
+            cons = np.diff(data['value'])
+            dt = data['datetime'][1:]
+            data = {'datetime': dt, 'value': cons}
+        return data
+
+    def to_json(self, interpolated=True, consumption=True, **kwargs):
+        import json
+        def handler(obj):
+            if hasattr(obj, 'isoformat'):
+                return obj.isoformat()
+            else:
+                raise TypeError, 'Object of type %s with value of %s is not JSON serializable' % (type(Obj), repr(Obj))
+        data = self.data(interpolated=interpolated, consumption=consumption)
+        result = []
+        for i in xrange(len(data['datetime'])):
+            result.append({'datetime': data['datetime'][i], 'value': data['value'][i]})
+        return json.dumps(result, default=handler, **kwargs)
+
+
+class GraemeLatestReading(object):
+    def __init__(self, dom):
+        self.data = {}
+        reading = dom.getElementsByTagName('reading')[0]
+        self.data['datetime'] = datetime.datetime.strptime(reading.getElementsByTagName("datetime")[0].childNodes[0].data, "%d/%m/%Y %H:%M:%S")
+        self.data['value'] = reading.getElementsByTagName("value")[0].childNodes[0].data
+
+    def to_json(self, **kwargs):
+        import json
+        def handler(obj):
+            if hasattr(obj, 'isoformat'):
+                return obj.isoformat()
+            else:
+                raise TypeError, 'Object of type %s with value of %s is not JSON serializable' % (type(Obj), repr(Obj))
+        return json.dumps(self.data, default=handler, **kwargs)
+
+
+class GraemeLatestReadingDate(object):
+    def __init__(self, dom):
+        self.datetime = datetime.datetime.strptime(dom.getElementsByTagName("datetime")[0].childNodes[0].data, "%d/%m/%Y %H:%M:%S")
+
+    def to_json(self, **kwargs):
+        import json
+        def handler(obj):
+            if hasattr(obj, 'isoformat'):
+                return obj.isoformat()
+            else:
+                raise TypeError, 'Object of type %s with value of %s is not JSON serializable' % (type(Obj), repr(Obj))
+        return json.dumps(self.datetime, default=handler, **kwargs)
+        
+        
 
 class gGetBuildingMeters(object):
     def __init__(self, dom):
