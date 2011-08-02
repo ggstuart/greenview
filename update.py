@@ -2,7 +2,6 @@
     To be called regularly e.g. as a cron job
 """
 import greenview, csv, datetime, os.path
-ws = greenview.WebService()
 
 class DateRecord(object):
     """represents a file on disk with a simple list of dates"""
@@ -34,6 +33,7 @@ class DateRecord(object):
 
 
 def maintain(root, meter_id):
+    ws = greenview.WebService()
     dr = DateRecord(os.path.join(root, 'date%s.csv' % meter_id))
     latest_in_file = dr.latestDownload()
     latest_on_server = ws.GraemeLatestReadingDate(meter_id).datetime
