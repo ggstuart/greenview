@@ -64,9 +64,12 @@ class GraemeLatestWeek(object):
             dt = data['datetime']
             readings = data['value']
             ts = timestamp(dt)
-            first = math.ceil(min(ts)/resolution)*resolution
-            last = (math.floor(max(ts)/resolution)+0.1)*resolution
-            new_ts = np.arange(first, last, resolution, dtype=float)
+            last = math.floor(max(ts)/resolution)*resolution
+            first = last - 7*24*60*60
+            new_ts = np.arange(first, last+1, resolution, dtype=float)
+            if len(new_ts) != 337:
+                print len(new_ts)
+                raise Exception('Web service is not providing enough data to generate a week of consumption data')
             new_dt = [datetime.datetime.fromtimestamp(s) for s in new_ts]
             new_readings = np.interp(new_ts, ts, readings)
             data = {'datetime': new_dt, 'value': new_readings}
