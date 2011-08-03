@@ -65,7 +65,7 @@ class GraemeLatestWeek(object):
             readings = data['value']
             ts = timestamp(dt)
             first = math.ceil(min(ts)/resolution)*resolution
-            last = math.floor(max(ts)/resolution)*resolution
+            last = (math.floor(max(ts)/resolution)+0.1)*resolution
             new_ts = np.arange(first, last, resolution, dtype=float)
             new_dt = [datetime.datetime.fromtimestamp(s) for s in new_ts]
             new_readings = np.interp(new_ts, ts, readings)
