@@ -4,7 +4,7 @@ Python library for accessing Greenview web service
 Installation
 -------
 
-Dowload the windows installer [here]{https://github.com/ggstuart/greenview/archives/master "Windows installer"}
+Dowload the windows installer [here](https://github.com/ggstuart/greenview/archives/master "Windows installer")
 
 OR, just copy the greenview.py module into a directory somewhere and import it to use the base library.
 
