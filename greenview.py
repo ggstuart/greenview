@@ -48,6 +48,18 @@ class WebService(object):
         dom = self.getDocument(cmd, force)
         return GraemeLatestWeek(dom)
 
+    def Meter(self, meter_id, force=False):
+        cmd = 'Meter?Meter_ID=%s' % meter_id
+        dom = self.getDocument(cmd, force)
+        return Meter(dom)
+
+class Meter(object):
+    def __init__(self, dom):
+        meter = dom.getElementsByTagName('Meter')[0]
+        self.id = meter.getElementsByTagName('Meter_ID')[0].childNodes[0].data.encode('ascii')
+        self.units = meter.getElementsByTagName('Units')[0].childNodes[0].data.encode('ascii')
+#        self.name = meter.getElementsByTagName('Meter_Name')[0].childNodes[0].data.encode('ascii')
+        self.description = meter.getElementsByTagName('Meter_Description')[0].childNodes[0].data.encode('ascii')
 
 class GraemeLatestWeek(object):
     def __init__(self, dom):
