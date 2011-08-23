@@ -6,7 +6,7 @@ Installation
 
 Download the source and run
 
-python setup.py install
+    python setup.py install
 
 OR, Download and run the [windows installer](https://github.com/ggstuart/greenview/archives/master "Windows installer").
 
