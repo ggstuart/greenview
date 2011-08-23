@@ -1,11 +1,11 @@
 from urllib2 import urlopen, HTTPError
 from xml.dom.minidom import parse
 import datetime, time, math
-import numpy as np
+from numpy import array, arange, diff, interp
 
 
-def timestamp(dt):
-    return np.array([time.mktime(d.timetuple()) for d in dt])
+#def timestamp(dt):
+#    return np.array([time.mktime(d.timetuple()) for d in dt])
 
 class WebService(object):
     
@@ -19,12 +19,12 @@ class WebService(object):
         if (not has_key or force):
             try:
                 xml = urlopen("%s%s" % (self.base_url, cmd))
+                dom = parse(xml)
+                xml.close()
+                self.data[cmd] = dom
             except HTTPError, e:
                 print "%s (%s)" % (e, e.url)
-                raise
-        dom = parse(xml)
-        xml.close()
-        self.data[cmd] = dom
+                raise e
         return self.data[cmd]
 
     def gGetBuildingMeters(self, force=False):
@@ -75,18 +75,18 @@ class GraemeLatestWeek(object):
             resolution = 30*60  #half hourly
             dt = data['datetime']
             readings = data['value']
-            ts = timestamp(dt)
+            ts = array([time.mktime(d.timetuple()) for d in dt])
             last = math.floor(max(ts)/resolution)*resolution
             first = last - 7*24*60*60
-            new_ts = np.arange(first, last+1, resolution, dtype=float)
+            new_ts = arange(first, last+1, resolution, dtype=float)
             if len(new_ts) != 337:
                 print len(new_ts)
                 raise Exception('Web service is not providing enough data to generate a week of consumption data')
             new_dt = [datetime.datetime.fromtimestamp(s) for s in new_ts]
-            new_readings = np.interp(new_ts, ts, readings)
+            new_readings = interp(new_ts, ts, readings)
             data = {'datetime': new_dt, 'value': new_readings}
         if consumption:
-            cons = np.diff(data['value'])
+            cons = diff(data['value'])
             dt = data['datetime'][1:]
             data = {'datetime': dt, 'value': cons}
         return data
