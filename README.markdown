@@ -4,14 +4,38 @@ Python library for accessing Greenview web service
 Installation
 -------
 
-Dowload the windows installer [here](https://github.com/ggstuart/greenview/archives/master "Windows installer")
+Download the source and run
 
-OR, just copy the greenview.py module into a directory somewhere and import it to use the base library.
+python setup.py install
+
+OR, Download and run the [windows installer](https://github.com/ggstuart/greenview/archives/master "Windows installer").
 
 
+Usage
+-------
 
-Examples of using the webservice are provided in test.py, plotting.py and update.py
+Two fairly trivial examples of using the webservice are provided in the examples module.
 
-The test.py module shows a very simple usage, writing json data
 The plotting.py script uses matplotlib (which you may need to install) to plot a weeks data for five buildings.
-The update.py module can be run as a script to generate json files for five buildings.
+The update.py module can be run as a script to generate json files for five buildings or use the greenview.maintain() function in your own script.
+
+Very simple example
+-------
+
+import greenview
+
+ws = greenview.WebService()
+r = ws.GraemeLatestReading(213)
+d = ws.GraemeLatestReadingDate(213)
+w = ws.GraemeLatestWeek(213)
+
+print r.to_json(indent=4)
+print d.to_json(indent=4)
+
+#compact json
+print w.to_json(separators=(',', ':'))
+
+#pretty json dumped into a file
+with open('output/output.json', 'w') as outfile:
+    outfile.write(w.to_json(indent=4))
+
