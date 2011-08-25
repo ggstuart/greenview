@@ -5,8 +5,9 @@ import greenview, csv, datetime, os.path
 
 class DateRecord(object):
     """represents a file on disk with a simple list of dates"""
-    def __init__(self, fileName):
+    def __init__(self, fileName, max_len=None):
         """read file into data array"""
+        self.max_len = max_len
         self.format = "%d/%m/%Y %H:%M:%S"
         self.filename = fileName
         self.data = []
@@ -19,6 +20,10 @@ class DateRecord(object):
     def updateFile(self, date):
         """Add a date to the end of the array and write all back to file"""
         self.data.append(date)
+        if max_len not None:
+            while len(self.data) > self.max_len:
+                self.data = self.data[1:]
+            
         with open(self.filename, 'w') as date_file:
             writer = csv.writer(date_file)
             for record in self.data:
