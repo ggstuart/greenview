@@ -6,6 +6,8 @@ from numpy import array, arange, diff, interp
 
 #def timestamp(dt):
 #    return np.array([time.mktime(d.timetuple()) for d in dt])
+class Error(Exception): pass
+class ServerError(Error): pass
 
 class WebService(object):
     
@@ -24,7 +26,7 @@ class WebService(object):
                 self.data[cmd] = dom
             except HTTPError, e:
                 print "%s (%s)" % (e, e.url)
-                raise e
+                raise ServerError(e.message)
         return self.data[cmd]
 
     def gGetBuildingMeters(self, force=False):

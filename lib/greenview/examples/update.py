@@ -59,6 +59,9 @@ def maintain(root, meter_id):
 if __name__ == "__main__":
     root = os.path.join(os.path.dirname(__file__), 'data')
     if not os.path.exists(root): os.makedirs(root)
-    for meter_id in [213, 69, 111, 15, 490]:
-        maintain(root, meter_id)
-
+    try:    
+        for meter_id in [213, 69, 111, 15, 490]:
+            maintain(root, meter_id)
+    except greenview.serverError, e:
+        print e
+        exit()
