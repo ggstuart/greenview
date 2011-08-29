@@ -2,7 +2,7 @@ from urllib2 import urlopen, HTTPError
 from xml.dom.minidom import parse
 import datetime, time, math
 from numpy import array, arange, diff, interp
-
+import logging
 
 #def timestamp(dt):
 #    return np.array([time.mktime(d.timetuple()) for d in dt])
@@ -17,16 +17,18 @@ class WebService(object):
 
     def getDocument(self, cmd, force):
         """Main generic interface, gets a file"""
+        logging.debug('WebService.getDocument(%s, %s)' % (cmd, force))
         has_key = self.data.has_key(cmd)
         if (not has_key or force):
+            logging.info('Requesting %s' % cmd)
             try:
                 xml = urlopen("%s%s" % (self.base_url, cmd))
                 dom = parse(xml)
                 xml.close()
                 self.data[cmd] = dom
             except HTTPError, e:
-                print "%s (%s)" % (e, e.url)
-                raise ServerError(e.message)
+                logging.error('Request failed (%s)' % (cmd, e))
+                raise ServerError(e)
         return self.data[cmd]
 
     def gGetBuildingMeters(self, force=False):

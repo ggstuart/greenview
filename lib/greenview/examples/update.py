@@ -3,6 +3,7 @@
 """
 import greenview, os.path
 from datetime import datetime
+import logging
 
 class DateRecord(object):
     """represents a file on disk with a simple list of dates"""
@@ -56,12 +57,17 @@ def maintain(root, meter_id):
     else:
         print '%04i already downloaded (%s)' % (meter_id, latest_in_file)
 
-if __name__ == "__main__":
-    root = os.path.join(os.path.dirname(__file__), 'data')
-    if not os.path.exists(root): os.makedirs(root)
+def main(root):
+    logging.basicConfig(filename=os.path.join(root, 'update.log'), level=logging.INFO, format='%(levelname)s: %(asctime)s %(message)s')
+    logging.info('Started')
     try:    
         for meter_id in [213, 69, 111, 15, 490]:
             maintain(root, meter_id)
-    except greenview.serverError, e:
-        print e
-        exit()
+    except greenview.ServerError, e:
+        logging.error(e.message)
+    logging.info('Finished')
+    
+if __name__ == "__main__":    
+    root = os.path.join(os.path.dirname(__file__), 'data')
+    if not os.path.exists(root): os.makedirs(root)
+    main(root)
