@@ -60,10 +60,13 @@ def maintain(root, meter_id):
 def main(root):
     logging.basicConfig(filename=os.path.join(root, 'update.log'), level=logging.INFO, format='%(levelname)s: %(asctime)s %(message)s')
     logging.info('Started')
-    try:    
+    try:
         for meter_id in [213, 69, 111, 15, 490]:
             maintain(root, meter_id)
     except greenview.ServerError, e:
+        logging.error(e.message)
+    except Exception, e:
+        logging.error('<--------------Unexpected error--------------')
         logging.error(e.message)
     logging.info('Finished')
     
