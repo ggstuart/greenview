@@ -20,7 +20,7 @@ class WebService(object):
         logging.debug('WebService.getDocument(%s, %s)' % (cmd, force))
         has_key = self.data.has_key(cmd)
         if (not has_key or force):
-            logging.info('Requesting %s' % cmd)
+            logging.debug('Requesting %s' % cmd)
             try:
                 xml = urlopen("%s%s" % (self.base_url, cmd))
                 dom = parse(xml)
