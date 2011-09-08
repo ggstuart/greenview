@@ -2,12 +2,18 @@ from urllib2 import urlopen, HTTPError
 from xml.dom.minidom import parse
 import datetime, time, math
 from numpy import array, arange, diff, interp
-import logging
+import logging, json
 
-#def timestamp(dt):
-#    return np.array([time.mktime(d.timetuple()) for d in dt])
 class Error(Exception): pass
 class ServerError(Error): pass
+
+def dateHandler(obj):
+    if type(obj).__name__ == 'datetime':
+        return obj.strftime("%d/%m/%Y %H:%M:%S")
+    elif hasattr(obj, 'isoformat'):
+        return obj.isoformat()
+    else:
+        raise TypeError, 'Object of type %s with value of %s is not JSON serializable' % (type(Obj), repr(Obj))
 
 class WebService(object):
     
@@ -96,18 +102,12 @@ class GraemeLatestWeek(object):
         return data
 
     def to_json(self, interpolated=True, consumption=True, **kwargs):
-        import json
-        def handler(obj):
-            if hasattr(obj, 'isoformat'):
-                return obj.isoformat()
-            else:
-                raise TypeError, 'Object of type %s with value of %s is not JSON serializable' % (type(Obj), repr(Obj))
+
         data = self.data(interpolated=interpolated, consumption=consumption)
         result = []
         for i in xrange(len(data['datetime'])):
             result.append({'datetime': data['datetime'][i], 'value': data['value'][i]})
-        return json.dumps(result, default=handler, **kwargs)
-
+        return json.dumps(result, default=dateHandler, **kwargs)
 
 class GraemeLatestReading(object):
     def __init__(self, dom):
@@ -117,30 +117,15 @@ class GraemeLatestReading(object):
         self.data['value'] = reading.getElementsByTagName("value")[0].childNodes[0].data
 
     def to_json(self, **kwargs):
-        import json
-        def handler(obj):
-            if hasattr(obj, 'isoformat'):
-                return obj.isoformat()
-            else:
-                raise TypeError, 'Object of type %s with value of %s is not JSON serializable' % (type(Obj), repr(Obj))
-        return json.dumps(self.data, default=handler, **kwargs)
-
+        return json.dumps(self.data, default=dateHandler, **kwargs)
 
 class GraemeLatestReadingDate(object):
     def __init__(self, dom):
         self.datetime = datetime.datetime.strptime(dom.getElementsByTagName("datetime")[0].childNodes[0].data, "%d/%m/%Y %H:%M:%S")
 
     def to_json(self, **kwargs):
-        import json
-        def handler(obj):
-            if hasattr(obj, 'isoformat'):
-                return obj.isoformat()
-            else:
-                raise TypeError, 'Object of type %s with value of %s is not JSON serializable' % (type(Obj), repr(Obj))
-        return json.dumps(self.datetime, default=handler, **kwargs)
+        return json.dumps(self.datetime, default=dateHandler, **kwargs)
         
-        
-
 class gGetBuildingMeters(object):
     def __init__(self, dom):
         self.data = []
@@ -163,13 +148,7 @@ class gGetBuildingMeters(object):
             self.data.append(record)
 
     def to_json(self, **kwargs):
-        import json
-        def handler(obj):
-            if hasattr(obj, 'isoformat'):
-                return obj.isoformat()
-            else:
-                raise TypeError, 'Object of type %s with value of %s is not JSON serializable' % (type(Obj), repr(Obj))
-        return json.dumps(self.data, default=handler, **kwargs)
+        return json.dumps(self.data, default=dateHandler, **kwargs)
 
     def to_xml(self):
         return "<Meters>\n\t%s\n</Meters>" % "\n\t".join(['<Meter id="%s">%s\n\t</Meter>' % (m['Meter_ID'], '\n\t\t<Name>%s</Name>\n\t\t<Readings>\n\t\t\t%s\n\t\t</Readings>' % (m['Meter_Name'], '\n\t\t\t'.join(['<Reading timestamp="%s">\n\t\t\t\t<Value>%s</Value>\n\t\t\t</Reading>' % (r['timestamp'].isoformat(), r['value']) for r in m['Readings']]))) for m in self.data])
