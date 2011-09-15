@@ -28,10 +28,10 @@ class WebService(object):
         if (not has_key or force):
             logging.debug('Requesting %s' % cmd)
             try:
-                xml = urlopen("%s%s" % (self.base_url, cmd))
-                dom = parse(xml)
-                xml.close()
-                self.data[cmd] = dom
+                with urlopen("%s%s" % (self.base_url, cmd)) as xml:
+                    dom = parse(xml)
+                    xml.close()
+                    self.data[cmd] = dom
             except HTTPError, e:
                 logging.error('Request failed (%s)' % (cmd, e))
                 raise ServerError(e)
