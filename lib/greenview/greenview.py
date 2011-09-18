@@ -28,13 +28,14 @@ class WebService(object):
         if (not has_key or force):
             logging.debug('Requesting %s' % cmd)
             try:
-                with urlopen("%s%s" % (self.base_url, cmd)) as xml:
-                    dom = parse(xml)
-                    xml.close()
-                    self.data[cmd] = dom
+                xml = urlopen("%s%s" % (self.base_url, cmd))
+                dom = parse(xml)
+                self.data[cmd] = dom
             except HTTPError, e:
                 logging.error('Request failed (%s)' % (cmd, e))
                 raise ServerError(e)
+            finally:
+                xml.close()
         return self.data[cmd]
 
     def gGetBuildingMeters(self, force=False):
@@ -62,6 +63,25 @@ class WebService(object):
         cmd = 'Meter?Meter_ID=%s' % meter_id
         dom = self.getDocument(cmd, force)
         return Meter(dom)
+
+    def Meters(self, force=False):
+        dom = self.getDocument('Meters', force)
+        return Meters(dom)
+
+    def Fail(self):
+        dom = self.getDocument('NonExistent', False)
+        return True
+
+class Meters(object):
+    def __init__(self, dom):
+        self.meters = []
+        for meter in dom.getElementsByTagName('Meter'):
+            myid = meter.getElementsByTagName('Meter_ID')[0].childNodes[0].data#.encode('ascii')
+            units = meter.getElementsByTagName('Units')[0].childNodes[0].data#.encode('ascii')
+#            name = meter.getElementsByTagName('Meter_Name')[0].childNodes[0].data.encode('ascii')
+            description = meter.getElementsByTagName('Meter_Description')[0].childNodes[0].data#.encode('ascii')
+            self.meters.append({'id': myid, 'units': units, 'description': description})
+        
 
 class Meter(object):
     def __init__(self, dom):
