@@ -26,7 +26,7 @@ class WebService(object):
         logging.debug('WebService.getDocument(%s, %s)' % (cmd, force))
         has_key = self.data.has_key(cmd)
         if (not has_key or force):
-            logging.debug('Requesting %s' % cmd)
+            logging.debug('Requesting %s%s' % (self.base_url, cmd))
             try:
                 xml = urlopen("%s%s" % (self.base_url, cmd))
                 dom = parse(xml)
@@ -34,6 +34,9 @@ class WebService(object):
             except HTTPError, e:
                 logging.error('Request failed (%s)' % (cmd, e))
                 raise ServerError(e)
+            except Exception, e:
+                logging.error(e)
+                raise
             finally:
                 xml.close()
         return self.data[cmd]
@@ -53,11 +56,15 @@ class WebService(object):
         dom = self.getDocument(cmd, force)
         return GraemeLatestReadingDate(dom)
 
-
     def GraemeLatestWeek(self, meter_id, inclusive=True, force=False):
         cmd = 'GraemeLatestWeek?meter_id=%s&inclusive=%s' % (meter_id, inclusive)
         dom = self.getDocument(cmd, force)
         return GraemeLatestWeek(dom)
+
+    def GraemeWeekEnding(self, meter_id, endDate, force=False):
+        cmd = 'GraemeWeekEnding?meter_id=%s&endDate=%s' % (meter_id, endDate.strftime("%m/%d/%Y%%20%H:%M:%S"))
+        dom = self.getDocument(cmd, force)
+        return GraemeWeekEnding(dom)
 
     def Meter(self, meter_id, force=False):
         cmd = 'Meter?Meter_ID=%s' % meter_id
@@ -91,7 +98,8 @@ class Meter(object):
 #        self.name = meter.getElementsByTagName('Meter_Name')[0].childNodes[0].data.encode('ascii')
         self.description = meter.getElementsByTagName('Meter_Description')[0].childNodes[0].data.encode('ascii')
 
-class GraemeLatestWeek(object):
+
+class GraemeWeek(object):
     def __init__(self, dom):
         self.datetime = []
         self.value = []
@@ -128,6 +136,9 @@ class GraemeLatestWeek(object):
         for i in xrange(len(data['datetime'])):
             result.append({'datetime': data['datetime'][i], 'value': data['value'][i]})
         return json.dumps(result, default=dateHandler, **kwargs)
+
+class GraemeLatestWeek(GraemeWeek): pass
+class GraemeWeekEnding(GraemeWeek): pass
 
 class GraemeLatestReading(object):
     def __init__(self, dom):
