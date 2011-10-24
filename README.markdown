@@ -4,7 +4,7 @@ Python library for accessing Greenview web service
 Installation
 -------
 
-Download the source and run
+Download the latest source and run
 
     python setup.py install
 
@@ -14,10 +14,7 @@ OR, Download and run the [windows installer](https://github.com/ggstuart/greenvi
 Usage
 -------
 
-Two fairly trivial examples of using the webservice are provided in the examples module.
-
-The plotting.py script uses matplotlib (which you may need to install) to plot a weeks data for five buildings.
-The update.py module can be run as a script to generate json files for five buildings or use the greenview.maintain() function in your own script.
+The [gvUpdate](https://github.com/ggstuart/gvUpdate "gvUpdate") project provides a script generate json files for five buildings.
 
 Very simple example
 -------
