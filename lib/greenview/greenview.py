@@ -134,7 +134,7 @@ class GraemeWeek(object):
         data = self.data(interpolated=interpolated, consumption=consumption)
         result = []
         for i in xrange(len(data['datetime'])):
-            result.append({'datetime': data['datetime'][i], 'value': data['value'][i]})
+            result.append({'datetime': data['datetime'][i], 'value': data['value'][i], 'time_id': data['datetime'][i].strftime("%a%H%M")})
         return json.dumps(result, default=dateHandler, **kwargs)
 
 class GraemeLatestWeek(GraemeWeek): pass
