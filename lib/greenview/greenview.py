@@ -1,4 +1,4 @@
-from urllib2 import urlopen, HTTPError
+from urllib2 import urlopen, HTTPError, URLError
 from xml.dom.minidom import parse
 import datetime, time, math
 from numpy import array, arange, diff, interp
@@ -16,29 +16,66 @@ def dateHandler(obj):
         raise TypeError, 'Object of type %s with value of %s is not JSON serializable' % (type(Obj), repr(Obj))
 
 class WebService(object):
+    """
+    Provides an api into the greenview web service
+    Pulls xml data and converts it into python objects
+    Has a terrible api but works.
+    >>> import greenview
+    >>> ws = greenview.WebService()
+    >>> ws.base_url
+    'http://duall.iesd.dmu.ac.uk/1010buildings/DuallWebService.asmx/'
+    """
     
     def __init__(self, base_url = 'http://duall.iesd.dmu.ac.uk/1010buildings/DuallWebService.asmx/'):
         self.base_url = base_url
         self.data = {}
 
     def getDocument(self, cmd, force):
-        """Main generic interface, gets a file"""
+        """
+        Main generic interface, gets a file
+        >>> import greenview
+        >>> ws = greenview.WebService(base_url='http://duall.iesd.dmu.ac.uk/1010buildings/DuallWebService.asmx/_fake')
+        >>> dom = ws.getDocument('GraemeLatestReading?meter_id=213', True)
+        Traceback (most recent call last):
+            ...
+        HTTPError: HTTP Error 500: Internal Server Error
+
+        >>> ws = greenview.WebService(base_url='http://duall.iesd.dmu.ac.uk/1010buildings/DuallWebService.fake/')
+        >>> dom = ws.getDocument('GraemeLatestReading?meter_id=213', True)
+        Traceback (most recent call last):
+            ...
+        HTTPError: HTTP Error 404: Not Found
+
+        >>> ws = greenview.WebService(base_url='http://fake.iesd.dmu.ac.uk/')
+        >>> dom = ws.getDocument('GraemeLatestReading?meter_id=213', True)
+        Traceback (most recent call last):
+            ...
+        URLError: <urlopen error [Errno 11001] getaddrinfo failed>
+        """
         logging.debug('WebService.getDocument(%s, %s)' % (cmd, force))
         has_key = self.data.has_key(cmd)
         if (not has_key or force):
             logging.debug('Requesting %s%s' % (self.base_url, cmd))
             try:
                 xml = urlopen("%s%s" % (self.base_url, cmd))
-                dom = parse(xml)
-                self.data[cmd] = dom
-            except HTTPError, e:
-                logging.error('Request failed (%s)' % (cmd, e))
-                raise ServerError(e)
-            except Exception, e:
+            except URLError, e:
+                logging.error('Base url: [%s]' % self.base_url)
                 logging.error(e)
                 raise
-            finally:
-                xml.close()
+            except HTTPError, e:
+                logging.error('Failed to get document [%s]' % cmd)
+                logging.error('Base url: [%s]' % self.base_url)
+                logging.error(e)
+                raise
+            except Exception, e:
+                logging.error('Failed to get document [%s]' % cmd)
+                logging.error('Base url: [%s]' % self.base_url)
+                logging.error(e)
+                raise
+            dom = parse(xml)
+            self.data[cmd] = dom
+            xml.close()
+
         return self.data[cmd]
 
     def gGetBuildingMeters(self, force=False):
@@ -184,3 +221,6 @@ class gGetBuildingMeters(object):
     def to_xml(self):
         return "<Meters>\n\t%s\n</Meters>" % "\n\t".join(['<Meter id="%s">%s\n\t</Meter>' % (m['Meter_ID'], '\n\t\t<Name>%s</Name>\n\t\t<Readings>\n\t\t\t%s\n\t\t</Readings>' % (m['Meter_Name'], '\n\t\t\t'.join(['<Reading timestamp="%s">\n\t\t\t\t<Value>%s</Value>\n\t\t\t</Reading>' % (r['timestamp'].isoformat(), r['value']) for r in m['Readings']]))) for m in self.data])
 
+if __name__ == "__main__":
+    import doctest
+    doctest.testmod()
